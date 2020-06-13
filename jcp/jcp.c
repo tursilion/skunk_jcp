@@ -1394,7 +1394,10 @@ void HandleConsole() {
 	uchar block[4080];
 	unsigned short tmp;
 	int i, len;
-
+#ifdef WIN32
+	char *p, *oldp;
+#endif
+        
 	// If the user requested an external console, then we just have to shell out to it here
 	if (NULL != g_pszExtShell) {
 		printf(" \nStarting external console...\n");
