@@ -2,7 +2,9 @@ CC=gcc
 CFLAGS=-O2 -Wall
 
 SRCC=jcp.c
+SRCC+=jcp_handler.c
 SRCH=dumpver.h flashstub.h romdump.h turbow.h univbin.h
+SRCH+=jcp_handler.h
 OBJS=$(SRCC:.c=.o) 
 
 all: .depend jcp 
