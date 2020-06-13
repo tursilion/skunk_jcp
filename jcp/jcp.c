@@ -1695,23 +1695,19 @@ void HandleConsole() {
 
                           // now we must not proceed from this point until the Jaguar
                           // acknowledges that block by clearing its length
-
                           do {
-                            if ((usb_control_msg(udev, 0xC0, 0xff, 4, nextez+0xFEA,
-                                                 (char*)&poll, 2, 1000) != 2)) {
-                              assert(0);
-                              printf("Failed to handshake with 68k (control-c to abort)\n");
-                              Sleep(1000);
+                            if ((usb_control_msg(udev, 0xC0, 0xff, 4, nextez+0xFEA, (char*)&poll, 2, 1000) != 2)) {
+                              Reattach();
                             }
                           } while (0 != poll);
-
+                          
                           // Now clear the buffer back to 0xffff so the Jag can use it again
                           tmp=0xffff;
-                          if (usb_control_msg(udev, 0x40, 0xfe, 4080, nextez+0xFEA,
-                                              (char*)&tmp, 2, 1000) != 2) {
-                            assert(0);
-                            printf("Failed to send block fully (control-c to abort)\n");
-                            Sleep(500);
+                          for (;;) {
+                            if (usb_control_msg(udev, 0x40, 0xfe, 4080, nextez+0xFEA, (char*)&tmp, 2, 1000) == 2) {
+                              break;
+                            }
+                            Reattach();
                           }
 
                           break;
