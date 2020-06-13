@@ -1,6 +1,9 @@
 CC=gcc
 CFLAGS=-O2 -Wall
+REMOVERS?=1
+ifeq ($(REMOVERS),1)
 CFLAGS+=-DREMOVERS
+endif
 
 SRCC=jcp.c
 SRCC+=jcp_handler.c
