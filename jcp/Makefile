@@ -1,5 +1,6 @@
 CC=gcc
 CFLAGS=-O2 -Wall
+CFLAGS+=-DREMOVERS
 
 SRCC=jcp.c
 SRCC+=jcp_handler.c

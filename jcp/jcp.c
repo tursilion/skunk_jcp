@@ -105,9 +105,8 @@ Thanks to SebRmv for ideas/fixes in the Skunklib support code
 #include "upgrade30002.h"
 #endif
 
-#define REMOVERS
-
 #ifdef REMOVERS
+#pragma message "Enabling Removers extensions."
 #include "jcp_handler.h"
 #endif
 
