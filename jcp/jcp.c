@@ -105,6 +105,12 @@ Thanks to SebRmv for ideas/fixes in the Skunklib support code
 #include "upgrade30002.h"
 #endif
 
+#define REMOVERS
+
+#ifdef REMOVERS
+#include "jcp_handler.h"
+#endif
+
 /* version major.minor.rev */
 #define JCPVERSION 0x020402
 /* ROM based address that we can blindly send dummy data to */
@@ -1389,8 +1395,10 @@ void Reattach() {
 }
 
 /* Does all the console functions */
-void HandleConsole() {	
-	int nTotalFileLength=0;		// bytes written
+void HandleConsole() {
+#ifndef REMOVERS
+  	int nTotalFileLength=0;		// bytes written
+#endif
 	uchar block[4080];
 	unsigned short tmp;
 	int i, len;
@@ -1682,12 +1690,12 @@ void HandleConsole() {
 					break;
 #else
                         case 1:
-                          serve_request(block+4, NULL);
+                          serve_request((char *)block+4, NULL);
                           break;
                         case 2: {
                           char buf[4064];
 
-                          serve_request(block+4, buf);
+                          serve_request((char *)block+4, buf);
                           int nLength = MSGHDRSZ+get_message_length(buf); // add header size to content length
 
                           // write that input to the jag in the alternate buffer
