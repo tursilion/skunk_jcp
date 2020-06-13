@@ -139,20 +139,20 @@ char *szNumDat[16] = {
     "      ",
 };
 int nDigits[12][7] = {
-	0,1,1,1,1,1,0,
-	2,3,2,2,2,2,4,
-	12,1,5,6,7,8,4,
-	0,1,5,9,5,1,0,
-	8,10,10,4,11,11,11,
-	4,8,8,0,5,1,0,
-	0,8,8,13,1,1,0,
-	4,5,5,11,2,2,2,
-	0,1,1,0,1,1,0,
-	0,1,1,14,5,5,0,
-	// space, accessed as -1
-	15,15,15,15,15,15,15,
-	// period, accessed as -2
-	15,15,15,15,15,15,6
+                      { 0,1,1,1,1,1,0 },
+                      { 2,3,2,2,2,2,4 },
+                      { 12,1,5,6,7,8,4 },
+                      { 0,1,5,9,5,1,0 },
+                      { 8,10,10,4,11,11,11 },
+                      { 4,8,8,0,5,1,0 },
+                      { 0,8,8,13,1,1,0 },
+                      { 4,5,5,11,2,2,2 },
+                      { 0,1,1,0,1,1,0 },
+                      { 0,1,1,14,5,5,0 },
+                      // space, accessed as -1
+                      { 15,15,15,15,15,15,15 },
+                      // period, accessed as -2
+                      { 15,15,15,15,15,15,6 }
 };
 
 #ifndef uchar
@@ -1394,7 +1394,6 @@ void HandleConsole() {
 	uchar block[4080];
 	unsigned short tmp;
 	int i, len;
-	char *p, *oldp;
 
 	// If the user requested an external console, then we just have to shell out to it here
 	if (NULL != g_pszExtShell) {
