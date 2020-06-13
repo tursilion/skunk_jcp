@@ -1497,6 +1497,7 @@ void HandleConsole() {
 		if ((block[0]==0xff) && (block[1]==0xff)) {
 			// escape command (16 bit command)
 			switch ((block[2]<<8)|block[3]) {
+#ifndef REMOVERS
 				case 0:		// nop - can be handy for synchronizing?
 					if (g_OptVerbose) {
 						printf("NOP received.\n");
@@ -1679,7 +1680,43 @@ void HandleConsole() {
 						fp=NULL;
 					}
 					break;
+#else
+                        case 1:
+                          serve_request(block+4, NULL);
+                          break;
+                        case 2: {
+                          char buf[4064];
 
+                          serve_request(block+4, buf);
+                          int nLength = MSGHDRSZ+get_message_length(buf); // add header size to content length
+
+                          // write that input to the jag in the alternate buffer
+                          WriteABlock((unsigned char*)buf, 0, -1, nLength);
+
+                          // now we must not proceed from this point until the Jaguar
+                          // acknowledges that block by clearing its length
+
+                          do {
+                            if ((usb_control_msg(udev, 0xC0, 0xff, 4, nextez+0xFEA,
+                                                 (char*)&poll, 2, 1000) != 2)) {
+                              assert(0);
+                              printf("Failed to handshake with 68k (control-c to abort)\n");
+                              Sleep(1000);
+                            }
+                          } while (0 != poll);
+
+                          // Now clear the buffer back to 0xffff so the Jag can use it again
+                          tmp=0xffff;
+                          if (usb_control_msg(udev, 0x40, 0xfe, 4080, nextez+0xFEA,
+                                              (char*)&tmp, 2, 1000) != 2) {
+                            assert(0);
+                            printf("Failed to send block fully (control-c to abort)\n");
+                            Sleep(500);
+                          }
+
+                          break;
+                        }
+#endif
 				default:
 					printf("Unimplemented command 0x%04X\n", (block[2]<<8)|block[3]);
 					break;
