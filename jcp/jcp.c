@@ -1698,7 +1698,7 @@ void HandleConsole() {
                           int nLength = MSGHDRSZ+get_message_length(buf); // add header size to content length
 
                           // write that input to the jag in the alternate buffer
-                          WriteABlock((unsigned char*)buf, 0, -1, nLength);
+                          WriteABlock((unsigned char*)buf, DUMMYBASE, -1, nLength);
 
                           // now we must not proceed from this point until the Jaguar
                           // acknowledges that block by clearing its length
