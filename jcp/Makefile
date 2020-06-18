@@ -1,8 +1,14 @@
 CC=gcc
 CFLAGS=-O2 -Wall
+REMOVERS?=1
+ifeq ($(REMOVERS),1)
+CFLAGS+=-DREMOVERS
+endif
 
 SRCC=jcp.c
+SRCC+=jcp_handler.c
 SRCH=dumpver.h flashstub.h romdump.h turbow.h univbin.h
+SRCH+=jcp_handler.h
 OBJS=$(SRCC:.c=.o) 
 
 all: .depend jcp 

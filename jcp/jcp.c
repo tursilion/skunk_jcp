@@ -1,4 +1,4 @@
-/* jcp.cpp : Move data to Jaguar by way of EZ-HOST RDB connection 
+/* jcp.cpp : Move data to Jaguar by way of EZ-HOST RDB connection
 	Skunkboard support - http://harmlesslion.com
 
 Design:
@@ -30,7 +30,7 @@ Memory map relative to base address $2800:
 	4000 - BFFF - external memory (not implemented)
 	C000 - C0FF - control registers
 	C100 - DFFF - external memory (not implemented)
-	E000 - FFFF - EZ-Host ROM BIOS 
+	E000 - FFFF - EZ-Host ROM BIOS
 
 SB Rev 2:
 	Special flags are added to indicate bank instructions:
@@ -70,7 +70,7 @@ Thanks to SebRmv for ideas/fixes in the Skunklib support code
 #define INCLUDE_BIOS_10204
 #define INCLUDE_BIOS_30002
 /* uncomment this to try automatic mode (experimental) */
-// JCP_AUTO doesn't work too well at the moment.. need to rearchitect. 
+// JCP_AUTO doesn't work too well at the moment.. need to rearchitect.
 // should detect the filetype FIRST, then decide how to upload it. Too
 // hacky trying to guess first.
 //#define JCP_AUTO
@@ -103,6 +103,11 @@ Thanks to SebRmv for ideas/fixes in the Skunklib support code
 #endif
 #ifdef INCLUDE_BIOS_30002
 #include "upgrade30002.h"
+#endif
+
+#ifdef REMOVERS
+#pragma message "Enabling Removers extensions."
+#include "jcp_handler.h"
 #endif
 
 /* version major.minor.rev */
@@ -139,20 +144,20 @@ char *szNumDat[16] = {
     "      ",
 };
 int nDigits[12][7] = {
-	0,1,1,1,1,1,0,
-	2,3,2,2,2,2,4,
-	12,1,5,6,7,8,4,
-	0,1,5,9,5,1,0,
-	8,10,10,4,11,11,11,
-	4,8,8,0,5,1,0,
-	0,8,8,13,1,1,0,
-	4,5,5,11,2,2,2,
-	0,1,1,0,1,1,0,
-	0,1,1,14,5,5,0,
-	// space, accessed as -1
-	15,15,15,15,15,15,15,
-	// period, accessed as -2
-	15,15,15,15,15,15,6
+                      { 0,1,1,1,1,1,0 },
+                      { 2,3,2,2,2,2,4 },
+                      { 12,1,5,6,7,8,4 },
+                      { 0,1,5,9,5,1,0 },
+                      { 8,10,10,4,11,11,11 },
+                      { 4,8,8,0,5,1,0 },
+                      { 0,8,8,13,1,1,0 },
+                      { 4,5,5,11,2,2,2 },
+                      { 0,1,1,0,1,1,0 },
+                      { 0,1,1,14,5,5,0 },
+                      // space, accessed as -1
+                      { 15,15,15,15,15,15,15 },
+                      // period, accessed as -2
+                      { 15,15,15,15,15,15,6 }
 };
 
 #ifndef uchar
@@ -251,7 +256,11 @@ int main(int argc, char* argv[])
 	int nFileArg, nBaseArg, nArg;
 	int nUsed;
 
+#ifdef REMOVERS
+        printf("rmvjcp v%02X.%02X.%02X built on %s\n\n", ((JCPVERSION&0xFF0000)>>16), ((JCPVERSION&0xFF00)>>8), (JCPVERSION&0xFF), __DATE__);
+#else
 	printf("jcp v%02X.%02X.%02X built on %s\n\n", ((JCPVERSION&0xFF0000)>>16), ((JCPVERSION&0xFF00)>>8), (JCPVERSION&0xFF), __DATE__);
+#endif
 
 	if ((argc<2) || ((argc>1)&&(strchr(argv[1],'?')))) {
 		bye("Usage: jcp [-rewfnbocdsux] file [$base]\n"			\
@@ -282,7 +291,7 @@ int main(int argc, char* argv[])
 	memset(fdata, 0, BUFSIZE);
 	base = 0x4000;
 	flen = 0;
-	skip = 0;	
+	skip = 0;
 	strcpy(g_szFilename, "");
 	nFileArg=1;
 	nBaseArg=2;
@@ -308,7 +317,7 @@ int main(int argc, char* argv[])
 				case 'f': g_OptDoFlash=true; base=0x802000; break;
 				case 'w': g_OptDoSlowFlash=true; break;		// 'w'ord writes
 				case 'e': g_OptEraseAllBlocks=true; break;
-				case 'd': g_OptDoDump=true; break; 
+				case 'd': g_OptDoDump=true; break;
 				case 'r': DoReset(); bye(""); break;
 				case 'n': g_OptNoBoot=true;	break;
 				case 'b': g_OptOnlyBoot=true; break;
@@ -320,7 +329,7 @@ int main(int argc, char* argv[])
 				case '*': DoSerialBig(); bye(""); break;	// undocumented! banner serial! Used in test script. :)
 				case '2': nCartBank=1; printf("Using bank 2\n"); break;
 				case '6': nCartBank=-1; g_SixMegWrite=true; printf("Using 6MB flash mode\n"); break;
-				case 'h': 
+				case 'h':
 					// get the forced header offset
 					if (nArg+1 < argc) {
 						nArg++;
@@ -333,17 +342,17 @@ int main(int argc, char* argv[])
 					}
 					break;
 
-				case 'x': 
+				case 'x':
 					if (argv[nArg][nPos+1]) {
 						bye("-x option requires external shell filename to follow");
 					}
-					g_OptConsole=true; 
-					nFileArg++; 
+					g_OptConsole=true;
+					nFileArg++;
 					nBaseArg++;
 					g_pszExtShell=argv[++nArg];
 					fExitLoop=1;
 					break;
-							
+
 				default: bye("Unknown option");
 			}
 			nPos++;
@@ -360,7 +369,7 @@ int main(int argc, char* argv[])
 
 	if ((g_OptOnlyBoot) && (argc > nFileArg)) {
 		base = ParseAddress(argv[nFileArg]);
-	} 
+	}
 
 	if (!g_OptOnlyBoot) {
 		if ((nFileArg >= argc) && (!g_OptConsole)) {
@@ -394,7 +403,7 @@ int main(int argc, char* argv[])
 	}
 
 	// Bit of a hack, preparse the file to figure out its true length and address
-	DetermineFileInfo(false, fdata, &base, &flen, &skip);	
+	DetermineFileInfo(false, fdata, &base, &flen, &skip);
 
 	if ((nCartBank == -1) && (flen <= 4*1024*1024-0x2000) && (!g_OptOnlyBoot)) {
 		printf("6MB mode not required, will flash bank 1\n");
@@ -465,7 +474,7 @@ int HandleTransfer(uchar *fdata, int base, int flen, int skip, bool part2of6mb) 
 	if (g_OptDoFlash) {
 		bool bOldNoBoot=g_OptNoBoot;	// loading the flash program ALWAYS requires NoBoot to be false
 		g_OptNoBoot=false;
-		
+
 		DoFlash(flen);
 
 		g_OptNoBoot=bOldNoBoot;
@@ -528,7 +537,7 @@ void LockBothBuffers() {
 	unsigned short tmp;
 
 	tmp=0;
-	
+
 	for (;;) {
 		if (usb_control_msg(udev, 0x40, 0xfe, 4080, 0x1800+0xFEA, (char*)&tmp, 2, 1000) == 2) {
 			break;
@@ -582,7 +591,7 @@ void WaitForBothBuffers() {
 		}
 	} while (-1 != poll);
 	printf(".");
-	
+
 	// second buffer
 	do {
 		Spin();
@@ -636,7 +645,7 @@ void DoFlash(int nLen) {
 	int idx;
 	unsigned int nBlocks;
 
-	g_OptSilentConsole=true; 
+	g_OptSilentConsole=true;
 
 	// due to the flash layout, we can't do a straight sector erase
 	// we compromise some and erase only half if we don't need it
@@ -703,7 +712,7 @@ void DoFlash(int nLen) {
 		}
 	} while (0 != poll);
 	printf(".");
-	
+
 	// second buffer
 	do {
 		Spin();
@@ -807,7 +816,7 @@ void DoSerialInfo() {
 
 	do {
 		Spin();
- 
+
 		if ((usb_control_msg(udev, 0xC0, 0xff, 4, 0x2800+0xFEA, (char*)&poll, 2, 1000) != 2)) {
 			Reattach();
 		}
@@ -829,7 +838,7 @@ void DoSerialInfo() {
 			if (0 == memcmp(SerBuf, "\x57\xfa\x0d\xf0", 4)) {
 				// that is what we are looking for! The next 8 bytes are the revision and serial number
 				// Note that they are in BCD!
-				printf("Boot version %02x.%02x.%02x, Serial %02x%02x\n", 
+				printf("Boot version %02x.%02x.%02x, Serial %02x%02x\n",
 					SerBuf[6], SerBuf[5], SerBuf[4],  SerBuf[9], SerBuf[8]);
 				return;
 			}
@@ -863,7 +872,7 @@ void DoSerialBig() {
 	// First, make sure that the $2800 buffer is marked as ready
 	do {
 		Spin();
- 
+
 		if ((usb_control_msg(udev, 0xC0, 0xff, 4, 0x2800+0xFEA, (char*)&poll, 2, 1000) != 2)) {
 			Reattach();
 		}
@@ -1023,7 +1032,7 @@ void DoBiosUpdate() {
 }
 
 /* Writes a block to the Jaguar */
-/* uchar points to data to write, curbase is the base to load at, 
+/* uchar points to data to write, curbase is the base to load at,
    start is the start address or -1 if not starting yet, and len
    is the number of bytes to load. len should be even or at least
    the buffer must be an even size!
@@ -1101,7 +1110,7 @@ void WriteABlock(uchar *data, int curbase, int start, int len) {
 	endtime = GetTickCount() + 2000;
 	do {
 		Spin();
- 
+
 		if ((usb_control_msg(udev, 0xC0, 0xff, 4, nextez+0xFEA, (char*)&poll, 2, 1000) != 2)) {
 			Reattach();
 		}
@@ -1140,7 +1149,7 @@ void WriteABlock(uchar *data, int curbase, int start, int len) {
 		poll=0;
 		do {
 			Spin();
-	 
+
 			if ((usb_control_msg(udev, 0xC0, 0xff, 4, nextez+0xFEA, (char*)&poll, 2, 1000) != 2)) {
 				Reattach();
 			}
@@ -1327,11 +1336,11 @@ void bye(char* msg) {
 }
 
 /* Locate the Jaguar on the USB bus, open it, get a handle, and upload the turboW tool */
-usb_dev_handle* findEZ(bool fInstallTurbo, bool fAbortOnFail) {	
+usb_dev_handle* findEZ(bool fInstallTurbo, bool fAbortOnFail) {
 	struct usb_bus *bus;
 	struct usb_device *dev = NULL;
 	int nTriesLeft=3;
-	
+
 	while (nTriesLeft--) {
 		usb_init();
 		usb_set_debug(0);
@@ -1389,12 +1398,16 @@ void Reattach() {
 }
 
 /* Does all the console functions */
-void HandleConsole() {	
+void HandleConsole() {
+#ifndef REMOVERS
 	int nTotalFileLength=0;		// bytes written
+#endif
 	uchar block[4080];
 	unsigned short tmp;
 	int i, len;
+#ifdef WIN32
 	char *p, *oldp;
+#endif
 
 	// If the user requested an external console, then we just have to shell out to it here
 	if (NULL != g_pszExtShell) {
@@ -1471,7 +1484,7 @@ void HandleConsole() {
 		for (;;) {
 			if (usb_control_msg(udev, 0x40, 0xfe, 4080, nextez+0xFEA, (char*)&tmp, 2, 1000) == 2) {
 				break;
-			} 
+			}
 			Reattach();
 		}
 
@@ -1485,7 +1498,7 @@ void HandleConsole() {
 		if (g_OptVerbose) {
 			printf("Read block from %x, len %d, first bytes: %02x %02x %02x %02x\n", nextez, ((block[0xfea]<<8)|block[0xfeb]), block[0], block[1], block[2], block[3]);
 		}
-		
+
 		if (0 == ((block[0xfea]<<8)|block[0xfeb])) {
 			// bad block (left over flag from booting), ignore
 			continue;
@@ -1495,6 +1508,7 @@ void HandleConsole() {
 		if ((block[0]==0xff) && (block[1]==0xff)) {
 			// escape command (16 bit command)
 			switch ((block[2]<<8)|block[3]) {
+#ifndef REMOVERS
 				case 0:		// nop - can be handy for synchronizing?
 					if (g_OptVerbose) {
 						printf("NOP received.\n");
@@ -1552,7 +1566,7 @@ void HandleConsole() {
 						}
 					}
 					break;
-		
+
 				case 3:		// Open a file for writing
 					{
 						char buf[4064];
@@ -1677,12 +1691,44 @@ void HandleConsole() {
 						fp=NULL;
 					}
 					break;
+#else
+                        case 1:
+                          serve_request((char *)block+4, NULL);
+                          break;
+                        case 2: {
+                          char buf[4064];
 
+                          serve_request((char *)block+4, buf);
+                          int nLength = MSGHDRSZ+get_message_length(buf); // add header size to content length
+
+                          // write that input to the jag in the alternate buffer
+                          WriteABlock((unsigned char*)buf, DUMMYBASE, -1, nLength);
+
+                          // now we must not proceed from this point until the Jaguar
+                          // acknowledges that block by clearing its length
+                          do {
+                            if ((usb_control_msg(udev, 0xC0, 0xff, 4, nextez+0xFEA, (char*)&poll, 2, 1000) != 2)) {
+                              Reattach();
+                            }
+                          } while (0 != poll);
+
+                          // Now clear the buffer back to 0xffff so the Jag can use it again
+                          tmp=0xffff;
+                          for (;;) {
+                            if (usb_control_msg(udev, 0x40, 0xfe, 4080, nextez+0xFEA, (char*)&tmp, 2, 1000) == 2) {
+                              break;
+                            }
+                            Reattach();
+                          }
+
+                          break;
+                        }
+#endif
 				default:
 					printf("Unimplemented command 0x%04X\n", (block[2]<<8)|block[3]);
 					break;
 			}
-			continue;	
+			continue;
 		}
 
 		// else get the length and reformat as a string
@@ -1724,7 +1770,7 @@ void FilenameSanitize(char *buf) {
 	}
 }
 
-// parse a string address (used by command line) 
+// parse a string address (used by command line)
 // Does not return on failure!
 int ParseAddress(const char *pBuf) {
 	int base;
@@ -1828,7 +1874,7 @@ bool DetermineFileInfo(bool bMute, uchar *fdata, int *base, int *flen, int *skip
 		}
 		*skip = loadbase = ENBIGEND(fdata+0x18);
 		*flen = 0;
-	
+
 		// Map all the sections into a new memory image. Not necessarily entirely safe.
 		secs = HALFBIGEND(fdata+0x30);
 		seclen = HALFBIGEND(fdata+0x2e);
@@ -1905,7 +1951,7 @@ bool DetermineFileInfo(bool bMute, uchar *fdata, int *base, int *flen, int *skip
 			if (!g_OptOverride) *base=0x802000;
 			*skip=0x2000;
 		} else {
-			// if all else failed, and the extension is .ROM, assume $802000 load address 
+			// if all else failed, and the extension is .ROM, assume $802000 load address
 			char *pTmp=strrchr(g_szFilename, '.');
 			if (NULL != pTmp) {
 				if (_stricmp(pTmp, ".rom")==0) {
