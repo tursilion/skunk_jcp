@@ -1526,8 +1526,12 @@ void HandleConsole() {
 						// get input from the user
 						char buf[4064];
 						printf("> ");
-						fgets(buf, 4064, stdin);
-						buf[4063]='\0';
+						if (!fgets(buf, 4064, stdin)) {
+							printf("Failed to read from stdin, code %d\n", errno);
+							buf[0]='\0';
+						} else {
+							buf[4063]='\0';
+						}
 
 						// strip EOL
 						i=(int)strlen(buf)-1;
