@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-O2 -Wall
-REMOVERS?=1
+REMOVERS?=0
 ifeq ($(REMOVERS),1)
 CFLAGS+=-DREMOVERS
 endif
