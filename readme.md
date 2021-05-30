@@ -1,5 +1,7 @@
 JCP is the main program used for communication with the Skunkboard.
 
+Fair warning: I am not updating this and people are generally not offering merge requests back, so you might want to wander the list of forks to see latest.
+
 It requires LibUSB 0.1 to be available. For Windows, the .lib and header file are provided. 
 For Linux or OSX, you must get these files yourself and set up LibUSB on your system correctly.
 
